@@ -46,7 +46,7 @@ async function pollTaskStatus(taskId: string, apiKey: string, maxAttempts = 60):
 
 export async function POST(request: NextRequest) {
   try {
-    const { image, parameters } = await request.json();
+    const { image, parameters, pose } = await request.json();
 
     if (!image) {
       return NextResponse.json(
@@ -94,6 +94,9 @@ export async function POST(request: NextRequest) {
       3: 'Sleep <4h, high stress',
     }[sleepStress];
 
+    // ポーズの指示（9グリッドモードの場合）
+    const poseInstruction = pose ? `\n\nPose and Expression:\n- ${pose}` : '\n\nPose and Expression:\n- The person opens eyes and looks gently at the camera with a warm smile\n- Subtle head movement, natural breathing';
+
     // 25年後のプロンプト - 健康パラメータを考慮した老化予測
     const futurePrompt = `Generate a photorealistic image-to-video of the same person 25 years older. Apply natural aging effects such as wrinkles, skin tone change, and facial volume shift, based on the following quantified lifestyle and health factors.
 
@@ -115,9 +118,7 @@ Weighting:
 Output Style:
 - Photorealistic, natural aging only
 - Maintain all facial identity and proportions
-- Add realistic signs of aging (wrinkles, pigmentation, volume changes) according to levels
-- The person opens eyes and looks gently at the camera with a warm smile
-- Subtle head movement, natural breathing
+- Add realistic signs of aging (wrinkles, pigmentation, volume changes) according to levels${poseInstruction}
 - Neutral lighting, professional studio composition
 - Output: 25 years later portrait video
 
