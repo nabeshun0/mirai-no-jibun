@@ -114,41 +114,59 @@ Output Style:
 --ratio adaptive --dur 5`;
     } else {
       // 25年後のプロンプト - 健康パラメータを考慮した老化予測
-      videoPrompt = `IMPORTANT: Age this person by exactly 25 years. This person must look significantly older.
+      videoPrompt = `CRITICAL: Age this person by exactly 25 years. Apply SIGNIFICANT aging effects regardless of gender. Do NOT beautify or minimize aging for women.
 
-Transform this person to show them 25 years in the future with realistic aging effects:
+Transform this person to show them 25 years in the future with REALISTIC and VISIBLE aging effects:
 
-REQUIRED AGING CHANGES (based on 25 years):
-- Deep wrinkles and fine lines on forehead, around eyes (crow's feet), mouth, and neck
-- Noticeable sagging skin on cheeks, jawline, and under chin
-- Age spots, sun damage, and uneven skin pigmentation
-- Thinning and graying hair (significant gray coverage)
-- Darker under-eye circles and deeper eye bags
-- Loss of facial volume and elasticity
-- Thinner lips with vertical lines
-- More prominent nasolabial folds
-- Visible neck aging with horizontal lines
+MANDATORY AGING CHANGES (Apply ALL of these):
+- DEEP forehead wrinkles (multiple horizontal lines)
+- PROMINENT crow's feet wrinkles around eyes
+- Nasolabial folds (deep lines from nose to mouth corners)
+- Marionette lines (lines from mouth corners to chin)
+- NOTICEABLE sagging skin on cheeks, jawline, and jowls
+- Visible under-chin sagging and neck wattles
+- AGE SPOTS and sun damage on face, especially cheeks and forehead
+- Uneven skin tone and pigmentation
+- SIGNIFICANTLY graying hair (at least 50-70% gray coverage)
+- Thinning hair density
+- Darker, more prominent under-eye circles
+- Puffy eye bags and hooded eyelids
+- LOSS of facial fat and volume (more angular face)
+- Thinner lips with vertical lip lines
+- Visible neck wrinkles and horizontal neck bands
+- Enlarged pores
+- Overall skin texture becoming rougher and less elastic
+
+For WOMEN specifically:
+- Post-menopausal skin thinning and dryness
+- Loss of collagen leading to pronounced sagging
+- Jawline becomes less defined with visible jowls
+- Apply aging effects EQUALLY as you would for men
+
+For MEN specifically:
+- Deepening of all wrinkles
+- More pronounced nasolabial folds
+- Receding hairline or balding patterns
 
 Lifestyle Impact Factors (3-level scale):
-- UV Exposure: Level ${uvExposure} (${uvLevelDesc}) - affects skin damage severity
-- Body Composition: Level ${bodyComposition} (${bodyLevelDesc}) - affects facial volume
-- Sleep & Stress: Level ${sleepStress} (${sleepLevelDesc}) - affects overall aging speed
+- UV Exposure: Level ${uvExposure} (${uvLevelDesc}) - MORE sun damage
+- Body Composition: Level ${bodyComposition} (${bodyLevelDesc}) - affects facial volume loss
+- Sleep & Stress: Level ${sleepStress} (${sleepLevelDesc}) - accelerates aging
 
-Apply these aging effects proportionally based on the levels above. Higher levels = more severe aging.
+Higher levels = MORE SEVERE aging effects. Do not hold back.
 
 Movement & Expression:
-- The aged person opens eyes and looks at camera with a gentle, mature smile
+- Aged person opens eyes and looks at camera with mature expression
 - Subtle head movement and natural breathing
-- Show wisdom and life experience in the expression
+- Show clear signs of aging in movement
 
 Technical Requirements:
-- Photorealistic elderly appearance
-- Maintain core facial identity while showing clear 25-year aging
-- Natural lighting, professional portrait composition
+- Photorealistic ELDERLY appearance (25 years older)
+- Maintain facial identity but show OBVIOUS aging
+- Natural lighting
 - Duration: 5 seconds
-- Aspect ratio: adaptive
 
-This MUST show a person who is clearly 25 years older than the input image.
+DO NOT make the person look younger, smoother, or more attractive. This is about REALISTIC aging prediction.
 
 --ratio adaptive --dur 5`;
     }
