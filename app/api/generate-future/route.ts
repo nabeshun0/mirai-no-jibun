@@ -1,5 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Helper function to poll task status
+async function pollTaskStatus(taskId: string, apiKey: string, maxAttempts = 60): Promise<string> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const response = await fetch(
+      `https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks/${taskId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to check task status: ${await response.text()}`);
+    }
+
+    const data = await response.json();
+    console.log(`Task status (attempt ${i + 1}):`, JSON.stringify(data, null, 2));
+
+    // Check for succeeded status (not 'success')
+    if (data.status === 'succeeded' || data.status === 'success') {
+      // Try different possible keys for the video URL
+      const videoUrl = data.content?.video_url || data.video_url || data.videoUrl || data.url ||
+                      data.result?.video_url || data.result?.url ||
+                      data.data?.video_url || data.data?.url;
+
+      if (videoUrl) {
+        console.log('Video URL found:', videoUrl);
+        return videoUrl;
+      }
+      console.log('Status is succeeded but no video URL found in response');
+    }
+
+    if (data.status === 'failed') {
+      throw new Error(`Video generation failed: ${data.error || 'Unknown error'}`);
+    }
+
+    // Wait 5 seconds before next poll
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
+
+  throw new Error('Video generation timed out');
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { image } = await request.json();
@@ -20,11 +64,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 25年後のプロンプト
-    const futurePrompt = 'The same person 25 years older, showing natural aging with wrinkles, gray hair, and mature features. Keep the same facial structure and identity. Photorealistic portrait, professional photography, high quality, detailed.';
+    const futurePrompt = 'The same person 25 years older, showing natural aging with wrinkles, gray hair, and mature features. The person opens eyes and looks gently at the camera with a warm smile. Subtle head movement, natural breathing. --ratio adaptive --dur 5';
 
-    // BytePlus Image Generation APIを使って未来の画像を生成（image-to-image）
-    const imageResponse = await fetch(
-      'https://ark.ap-southeast.bytepluses.com/api/v3/images/generations',
+    // BytePlus Video Generation APIを使って未来の動画を生成（image-to-video）
+    const createTaskResponse = await fetch(
+      'https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks',
       {
         method: 'POST',
         headers: {
@@ -32,40 +76,50 @@ export async function POST(request: NextRequest) {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'seedream-4-0-250828',
-          prompt: futurePrompt,
-          image: image, // 元画像を参照
-          sequential_image_generation: 'disabled',
-          response_format: 'url',
-          size: '2K',
-          stream: false,
-          watermark: false,
+          model: 'seedance-1-0-pro-fast-251015',
+          content: [
+            {
+              type: 'text',
+              text: futurePrompt,
+            },
+            {
+              type: 'image_url',
+              image_url: {
+                url: image,
+              },
+            },
+          ],
         }),
       }
     );
 
-    if (!imageResponse.ok) {
-      const errorText = await imageResponse.text();
-      console.error('Image API error:', errorText);
+    if (!createTaskResponse.ok) {
+      const errorText = await createTaskResponse.text();
+      console.error('Video API error:', errorText);
       return NextResponse.json(
-        { error: 'Failed to generate image', details: errorText },
-        { status: imageResponse.status }
+        { error: 'Failed to create video generation task', details: errorText },
+        { status: createTaskResponse.status }
       );
     }
 
-    const imageData = await imageResponse.json();
-    const generatedImageUrl = imageData.data[0]?.url;
+    const taskData = await createTaskResponse.json();
+    const taskId = taskData.id || taskData.task_id;
 
-    if (!generatedImageUrl) {
+    if (!taskId) {
       return NextResponse.json(
-        { error: 'No image URL in response' },
+        { error: 'No task ID in response', details: JSON.stringify(taskData) },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ imageUrl: generatedImageUrl });
+    console.log('Video generation task created:', taskId);
+
+    // Poll for completion
+    const videoUrl = await pollTaskStatus(taskId, apiKey);
+
+    return NextResponse.json({ videoUrl });
   } catch (error) {
-    console.error('Error generating future image:', error);
+    console.error('Error generating future video:', error);
     return NextResponse.json(
       { error: 'Internal server error', details: String(error) },
       { status: 500 }

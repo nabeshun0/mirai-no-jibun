@@ -4,8 +4,9 @@ import { useState } from 'react';
 
 export default function Home() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [futureImage, setFutureImage] = useState<string | null>(null);
+  const [futureVideo, setFutureVideo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [statusLog, setStatusLog] = useState<string[]>([]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -13,17 +14,26 @@ export default function Home() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
-        setFutureImage(null);
+        setFutureVideo(null);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const addLog = (message: string) => {
+    setStatusLog(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
+    console.log(message);
   };
 
   const handleGenerateFuture = async () => {
     if (!selectedImage) return;
 
     setIsLoading(true);
+    setStatusLog([]);
+    addLog('動画生成を開始します...');
+
     try {
+      addLog('APIリクエストを送信中...');
       const response = await fetch('/api/generate-future', {
         method: 'POST',
         headers: {
@@ -35,16 +45,20 @@ export default function Home() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('API error:', errorData);
-        alert('画像の生成に失敗しました: ' + (errorData.error || 'Unknown error'));
+        addLog(`エラー: ${errorData.error || 'Unknown error'}`);
+        alert('動画の生成に失敗しました: ' + (errorData.error || 'Unknown error'));
         setIsLoading(false);
         return;
       }
 
+      addLog('動画生成が完了しました！');
       const data = await response.json();
-      setFutureImage(data.imageUrl);
+      setFutureVideo(data.videoUrl);
+      addLog('動画URLを取得しました');
     } catch (error) {
       console.error('Error:', error);
-      alert('画像の生成中にエラーが発生しました');
+      addLog(`エラー: ${error}`);
+      alert('動画の生成中にエラーが発生しました');
     } finally {
       setIsLoading(false);
     }
@@ -116,15 +130,23 @@ export default function Home() {
                   </h2>
                   <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
                     {isLoading ? (
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center w-full px-4">
                         <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-4"></div>
-                        <p className="text-gray-600">未来を生成中...</p>
+                        <p className="text-gray-600 font-semibold">未来を生成中...</p>
+                        <p className="text-gray-500 text-sm mt-2">動画生成には数分かかります</p>
+                        <div className="mt-6 w-full max-h-48 overflow-y-auto bg-gray-50 rounded-lg p-4 text-left">
+                          <p className="text-xs font-semibold text-gray-700 mb-2">処理ログ:</p>
+                          {statusLog.map((log, i) => (
+                            <p key={i} className="text-xs text-gray-600 font-mono">{log}</p>
+                          ))}
+                        </div>
                       </div>
-                    ) : futureImage ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img
-                        src={futureImage}
-                        alt="25年後の写真"
+                    ) : futureVideo ? (
+                      <video
+                        src={futureVideo}
+                        controls
+                        autoPlay
+                        loop
                         className="object-cover w-full h-full"
                       />
                     ) : (
@@ -140,7 +162,7 @@ export default function Home() {
                 <button
                   onClick={() => {
                     setSelectedImage(null);
-                    setFutureImage(null);
+                    setFutureVideo(null);
                   }}
                   className="px-8 py-4 bg-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-300 transition-colors"
                 >
