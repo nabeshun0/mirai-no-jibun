@@ -8,6 +8,14 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [statusLog, setStatusLog] = useState<string[]>([]);
 
+  // 健康パラメータ
+  const [age, setAge] = useState(30);
+  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [ethnicity, setEthnicity] = useState('Asian');
+  const [uvExposure, setUvExposure] = useState(2);
+  const [bodyComposition, setBodyComposition] = useState(2);
+  const [sleepStress, setSleepStress] = useState(2);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -39,7 +47,17 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ image: selectedImage }),
+        body: JSON.stringify({
+          image: selectedImage,
+          parameters: {
+            age,
+            gender,
+            ethnicity,
+            uvExposure,
+            bodyComposition,
+            sleepStress,
+          },
+        }),
       });
 
       if (!response.ok) {
@@ -109,6 +127,120 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-8">
+              {/* 健康パラメータ入力 */}
+              <div className="bg-white rounded-3xl shadow-xl p-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                  健康・ライフスタイル情報
+                </h2>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* 基本情報 */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      年齢
+                    </label>
+                    <input
+                      type="number"
+                      value={age}
+                      onChange={(e) => setAge(Number(e.target.value))}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                      min="18"
+                      max="80"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      性別
+                    </label>
+                    <select
+                      value={gender}
+                      onChange={(e) => setGender(e.target.value as 'male' | 'female')}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                    >
+                      <option value="male">男性</option>
+                      <option value="female">女性</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      人種
+                    </label>
+                    <select
+                      value={ethnicity}
+                      onChange={(e) => setEthnicity(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                    >
+                      <option value="Asian">アジア人</option>
+                      <option value="Caucasian">白人</option>
+                      <option value="African">アフリカ系</option>
+                      <option value="Hispanic">ヒスパニック</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* ライフスタイル要因 */}
+                <div className="mt-6 space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      UV露出レベル: {uvExposure}
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="3"
+                      value={uvExposure}
+                      onChange={(e) => setUvExposure(Number(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-600 mt-1">
+                      <span>室内/日焼け止め毎日</span>
+                      <span>適度な外出</span>
+                      <span>屋外作業/UV対策なし</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      体組成レベル: {bodyComposition}
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="3"
+                      value={bodyComposition}
+                      onChange={(e) => setBodyComposition(Number(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-600 mt-1">
+                      <span>BMI 18-21/筋肉質</span>
+                      <span>BMI 22-24/標準</span>
+                      <span>BMI 25+/肥満</span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      睡眠・ストレスレベル: {sleepStress}
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="3"
+                      value={sleepStress}
+                      onChange={(e) => setSleepStress(Number(e.target.value))}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-gray-600 mt-1">
+                      <span>睡眠7h+/低ストレス</span>
+                      <span>睡眠5-6h/中ストレス</span>
+                      <span>睡眠4h未満/高ストレス</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="bg-white rounded-3xl shadow-xl p-6">
                   <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">

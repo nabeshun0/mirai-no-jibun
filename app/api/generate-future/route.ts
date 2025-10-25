@@ -46,7 +46,7 @@ async function pollTaskStatus(taskId: string, apiKey: string, maxAttempts = 60):
 
 export async function POST(request: NextRequest) {
   try {
-    const { image } = await request.json();
+    const { image, parameters } = await request.json();
 
     if (!image) {
       return NextResponse.json(
@@ -54,6 +54,16 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // パラメータのデフォルト値
+    const {
+      age = 30,
+      gender = 'male',
+      ethnicity = 'Asian',
+      uvExposure = 2,
+      bodyComposition = 2,
+      sleepStress = 2,
+    } = parameters || {};
 
     const apiKey = process.env.BYTEPLUS_API_KEY;
     if (!apiKey) {
@@ -63,8 +73,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 25年後のプロンプト
-    const futurePrompt = 'The same person 25 years older, showing natural aging with wrinkles, gray hair, and mature features. The person opens eyes and looks gently at the camera with a warm smile. Subtle head movement, natural breathing. --ratio adaptive --dur 5';
+    // UV露出レベルの説明
+    const uvLevelDesc = {
+      1: 'Indoor lifestyle / sunscreen daily',
+      2: 'Moderate outdoor activity',
+      3: 'Outdoor work or no UV protection',
+    }[uvExposure];
+
+    // 体組成レベルの説明
+    const bodyLevelDesc = {
+      1: 'BMI 18-21 / muscular',
+      2: 'BMI 22-24 / standard',
+      3: 'BMI 25+ / overweight or muscle loss',
+    }[bodyComposition];
+
+    // 睡眠・ストレスレベルの説明
+    const sleepLevelDesc = {
+      1: 'Sleep 7h+, low stress',
+      2: 'Sleep 5-6h, moderate stress',
+      3: 'Sleep <4h, high stress',
+    }[sleepStress];
+
+    // 25年後のプロンプト - 健康パラメータを考慮した老化予測
+    const futurePrompt = `Generate a photorealistic image-to-video of the same person 25 years older. Apply natural aging effects such as wrinkles, skin tone change, and facial volume shift, based on the following quantified lifestyle and health factors.
+
+Base Information:
+- Gender: ${gender}
+- Current Age: ${age}
+- Ethnicity: ${ethnicity}
+
+Lifestyle Aging Factors (3-level scale):
+- UV Exposure: Level ${uvExposure} (${uvLevelDesc})
+- Body Composition (BMI/Fat): Level ${bodyComposition} (${bodyLevelDesc})
+- Sleep & Stress Balance: Level ${sleepStress} (${sleepLevelDesc})
+
+Weighting:
+- UV exposure: 3
+- Body composition: 2
+- Sleep & stress: 1
+
+Output Style:
+- Photorealistic, natural aging only
+- Maintain all facial identity and proportions
+- Add realistic signs of aging (wrinkles, pigmentation, volume changes) according to levels
+- The person opens eyes and looks gently at the camera with a warm smile
+- Subtle head movement, natural breathing
+- Neutral lighting, professional studio composition
+- Output: 25 years later portrait video
+
+--ratio adaptive --dur 5`;
 
     // BytePlus Video Generation APIを使って未来の動画を生成（image-to-video）
     const createTaskResponse = await fetch(
