@@ -2,52 +2,11 @@
 
 import { useState, useRef } from 'react';
 
-type PoseImage = {
-  id: number;
-  image: string | null;
-  video: string | null;
-  pose: string;
-  isGenerating: boolean;
-};
-
-// ポーズ候補のプール
-const POSE_CANDIDATES = [
-  '正面を向いて微笑む',
-  '右を向いて微笑む',
-  '左を向いて微笑む',
-  '上を見上げて微笑む',
-  '目を細めて優しく笑う',
-  '少し首を傾げて微笑む',
-  '遠くを見つめる表情',
-  '考え込むような真剣な表情',
-  '驚いた表情で目を見開く',
-  '穏やかに目を閉じる',
-  'ウィンクして笑う',
-  '笑顔で手を振る',
-  '親指を立ててグッドサインを出す',
-  '両手を頬に当てて驚く',
-  '顎に手を当てて考える',
-];
-
-// ランダムに3つのポーズを選択する関数
-function selectRandomPoses(count: number = 3): string[] {
-  const shuffled = [...POSE_CANDIDATES].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
-
 export default function Home() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [futureVideo, setFutureVideo] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [statusLog, setStatusLog] = useState<string[]>([]);
-
-  // 3ポーズ用（1枚の写真から3つのポーズ動画を生成）
-  const [gridMode, setGridMode] = useState(false);
-  const [poseImages, setPoseImages] = useState<PoseImage[]>([
-    { id: 1, image: null, video: null, pose: '', isGenerating: false },
-    { id: 2, image: null, video: null, pose: '', isGenerating: false },
-    { id: 3, image: null, video: null, pose: '', isGenerating: false },
-  ]);
 
   // カメラ関連
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -112,77 +71,9 @@ export default function Home() {
 
     // base64形式で画像を取得
     const imageData = canvasRef.current.toDataURL('image/jpeg');
-
-    if (gridMode) {
-      // 3ポーズモード：1枚の写真を全てのポーズに設定
-      const newPoseImages = poseImages.map(p => ({ ...p, image: imageData }));
-      setPoseImages(newPoseImages);
-      closeCamera();
-    } else {
-      // 通常モード
-      setSelectedImage(imageData);
-      setFutureVideo(null);
-      closeCamera();
-    }
-  };
-
-  const generateAllPoseVideos = async () => {
-    // ランダムに3つのポーズを選択
-    const selectedPoses = selectRandomPoses(3);
-
-    // 選択されたポーズをposeImagesに設定
-    const newPoseImages = poseImages.map((p, idx) => ({
-      ...p,
-      pose: selectedPoses[idx],
-    }));
-    setPoseImages(newPoseImages);
-
-    // 同じ写真で3つのポーズ動画を生成
-    for (let i = 0; i < newPoseImages.length; i++) {
-      if (!newPoseImages[i].image) continue;
-
-      // 生成中フラグを設定
-      setPoseImages(prev => {
-        const updated = [...prev];
-        updated[i].isGenerating = true;
-        return updated;
-      });
-
-      try {
-        const response = await fetch('/api/generate-future', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            image: newPoseImages[i].image,
-            parameters: {
-              uvExposure,
-              bodyComposition,
-              sleepStress,
-            },
-            pose: selectedPoses[i],
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setPoseImages(prev => {
-            const updated = [...prev];
-            updated[i].video = data.videoUrl;
-            updated[i].isGenerating = false;
-            return updated;
-          });
-        }
-      } catch (error) {
-        console.error(`Pose ${i + 1} generation error:`, error);
-        setPoseImages(prev => {
-          const updated = [...prev];
-          updated[i].isGenerating = false;
-          return updated;
-        });
-      }
-    }
+    setSelectedImage(imageData);
+    setFutureVideo(null);
+    closeCamera();
   };
 
   const addLog = (message: string) => {
@@ -246,129 +137,12 @@ export default function Home() {
           <p className="text-xl text-gray-600 mb-6">
             25年後のあなたの姿を見てみませんか？
           </p>
-
-          {/* モード切り替え */}
-          <div className="flex justify-center gap-4">
-            <button
-              onClick={() => setGridMode(false)}
-              className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                !gridMode
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              シングルモード
-            </button>
-            <button
-              onClick={() => setGridMode(true)}
-              className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                gridMode
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              3ポーズモード
-            </button>
-          </div>
         </div>
 
         <div className="max-w-6xl mx-auto">
-          {gridMode && poseImages.some(p => p.image) ? (
-            /* 9グリッド表示 */
-            <div className="space-y-8">
-              <div className="bg-white rounded-3xl shadow-xl p-8">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-                  3ポーズコレクション
-                </h2>
-
-                {/* 3グリッド */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  {poseImages.map((pose) => (
-                    <div key={pose.id} className="aspect-square bg-gray-100 rounded-xl overflow-hidden relative">
-                      {pose.video ? (
-                        <video
-                          src={pose.video}
-                          controls
-                          loop
-                          className="w-full h-full object-cover"
-                        />
-                      ) : pose.image ? (
-                        <>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={pose.image}
-                            alt={`ポーズ ${pose.id}`}
-                            className="w-full h-full object-cover"
-                          />
-                          {pose.isGenerating && (
-                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                              <div className="text-white text-center">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-white mb-2 mx-auto"></div>
-                                <p className="text-sm">生成中...</p>
-                              </div>
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <p className="text-sm text-center px-2">{pose.pose}</p>
-                        </div>
-                      )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-2">
-                        <p className="text-white text-xs text-center">{pose.pose}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* アクションボタン */}
-                <div className="flex gap-4 justify-center">
-                  <button
-                    onClick={() => {
-                      setPoseImages([
-                        { id: 1, image: null, video: null, pose: '', isGenerating: false },
-                        { id: 2, image: null, video: null, pose: '', isGenerating: false },
-                        { id: 3, image: null, video: null, pose: '', isGenerating: false },
-                      ]);
-                    }}
-                    className="px-8 py-4 bg-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-300 transition-colors"
-                  >
-                    やり直す
-                  </button>
-                  {!poseImages[0].image && (
-                    <button
-                      onClick={() => {
-                        setIsCameraOpen(true);
-                        openCamera();
-                      }}
-                      className="px-8 py-4 bg-blue-600 text-white rounded-full font-semibold hover:bg-blue-700 transition-colors"
-                    >
-                      写真を撮影
-                    </button>
-                  )}
-                  <button
-                    onClick={generateAllPoseVideos}
-                    disabled={poseImages.every(p => !p.image) || poseImages.some(p => p.isGenerating)}
-                    className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
-                  >
-                    3ポーズ動画を生成
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : !selectedImage && !isCameraOpen ? (
+          {!selectedImage && !isCameraOpen ? (
             <div className="bg-white rounded-3xl shadow-xl p-12">
               <div className="space-y-6">
-                {gridMode && (
-                  <div className="text-center mb-4">
-                    <p className="text-lg font-semibold text-purple-600">
-                      1枚の写真から3つのポーズ動画を生成
-                    </p>
-                    <p className="text-sm text-gray-600 mt-2">
-                      写真撮影後、ランダムに選ばれた3種類のポーズで動画を作成します
-                    </p>
-                  </div>
-                )}
                 {/* カメラ撮影ボタン */}
                 <button
                   onClick={openCamera}
@@ -436,16 +210,6 @@ export default function Home() {
               <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
                 カメラで撮影
               </h2>
-              {gridMode && (
-                <div className="mb-4 text-center">
-                  <p className="text-lg font-semibold text-purple-600">
-                    この写真から3種類のポーズ動画を生成します
-                  </p>
-                  <p className="text-sm text-gray-600 mt-1">
-                    ポーズはランダムに選択されます
-                  </p>
-                </div>
-              )}
               <div className="relative">
                 <video
                   ref={(ref) => {
