@@ -19,10 +19,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 25年後のプロンプトを生成（一般的な説明を使用）
-    const futurePrompt = 'Portrait of an Asian person 25 years older, showing natural aging with wrinkles, some gray hair, and mature features. The person looks wise and experienced with visible signs of aging like laugh lines and forehead wrinkles. Photorealistic portrait, professional photography, high quality, detailed, studio lighting, neutral background.';
+    // 25年後のプロンプト
+    const futurePrompt = 'The same person 25 years older, showing natural aging with wrinkles, gray hair, and mature features. Keep the same facial structure and identity. Photorealistic portrait, professional photography, high quality, detailed.';
 
-    // BytePlus Image Generation APIを使って未来の画像を生成
+    // BytePlus Image Generation APIを使って未来の画像を生成（image-to-image）
     const imageResponse = await fetch(
       'https://ark.ap-southeast.bytepluses.com/api/v3/images/generations',
       {
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
         body: JSON.stringify({
           model: 'seedream-4-0-250828',
           prompt: futurePrompt,
+          image: image, // 元画像を参照
           sequential_image_generation: 'disabled',
           response_format: 'url',
           size: '2K',
