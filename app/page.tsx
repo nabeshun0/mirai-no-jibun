@@ -2,10 +2,19 @@
 
 import { useState, useRef } from 'react';
 
+type TimelineVideo = {
+  period: string;
+  video: string | null;
+  isGenerating: boolean;
+  label: string;
+};
+
 export default function Home() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [futureVideo, setFutureVideo] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [timelineVideos, setTimelineVideos] = useState<TimelineVideo[]>([
+    { period: 'present', video: null, isGenerating: false, label: '現在' },
+    { period: 'future', video: null, isGenerating: false, label: '25年後' },
+  ]);
   const [statusLog, setStatusLog] = useState<string[]>([]);
 
   // カメラ関連
@@ -25,7 +34,10 @@ export default function Home() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setSelectedImage(reader.result as string);
-        setFutureVideo(null);
+        setTimelineVideos([
+          { period: 'present', video: null, isGenerating: false, label: '現在' },
+          { period: 'future', video: null, isGenerating: false, label: '25年後' },
+        ]);
       };
       reader.readAsDataURL(file);
     }
@@ -72,7 +84,10 @@ export default function Home() {
     // base64形式で画像を取得
     const imageData = canvasRef.current.toDataURL('image/jpeg');
     setSelectedImage(imageData);
-    setFutureVideo(null);
+    setTimelineVideos([
+      { period: 'present', video: null, isGenerating: false, label: '現在' },
+      { period: 'future', video: null, isGenerating: false, label: '25年後' },
+    ]);
     closeCamera();
   };
 
@@ -81,49 +96,75 @@ export default function Home() {
     console.log(message);
   };
 
-  const handleGenerateFuture = async () => {
+  const generateAllTimelines = async () => {
     if (!selectedImage) return;
 
-    setIsLoading(true);
     setStatusLog([]);
-    addLog('動画生成を開始します...');
+    addLog('未来の動画生成を開始します...');
 
-    try {
-      addLog('APIリクエストを送信中...');
-      const response = await fetch('/api/generate-future', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          image: selectedImage,
-          parameters: {
-            uvExposure,
-            bodyComposition,
-            sleepStress,
-          },
-        }),
-      });
+    // 未来（25年後）のみ生成（現在は画像のまま）
+    for (let i = 0; i < timelineVideos.length; i++) {
+      const timeline = timelineVideos[i];
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API error:', errorData);
-        addLog(`エラー: ${errorData.error || 'Unknown error'}`);
-        alert('動画の生成に失敗しました: ' + (errorData.error || 'Unknown error'));
-        setIsLoading(false);
-        return;
+      // 現在はスキップ
+      if (timeline.period === 'present') {
+        continue;
       }
 
-      addLog('動画生成が完了しました！');
-      const data = await response.json();
-      setFutureVideo(data.videoUrl);
-      addLog('動画URLを取得しました');
-    } catch (error) {
-      console.error('Error:', error);
-      addLog(`エラー: ${error}`);
-      alert('動画の生成中にエラーが発生しました');
-    } finally {
-      setIsLoading(false);
+      // 生成中フラグを設定
+      setTimelineVideos(prev => {
+        const updated = [...prev];
+        updated[i].isGenerating = true;
+        return updated;
+      });
+
+      addLog(`${timeline.label}の動画を生成中...`);
+
+      try {
+        const response = await fetch('/api/generate-future', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            image: selectedImage,
+            parameters: {
+              uvExposure,
+              bodyComposition,
+              sleepStress,
+            },
+            period: timeline.period,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setTimelineVideos(prev => {
+            const updated = [...prev];
+            updated[i].video = data.videoUrl;
+            updated[i].isGenerating = false;
+            return updated;
+          });
+          addLog(`${timeline.label}の動画生成が完了しました！`);
+        } else {
+          const errorData = await response.json();
+          console.error('API error:', errorData);
+          addLog(`${timeline.label}のエラー: ${errorData.error || 'Unknown error'}`);
+          setTimelineVideos(prev => {
+            const updated = [...prev];
+            updated[i].isGenerating = false;
+            return updated;
+          });
+        }
+      } catch (error) {
+        console.error(`${timeline.label} generation error:`, error);
+        addLog(`${timeline.label}のエラー: ${error}`);
+        setTimelineVideos(prev => {
+          const updated = [...prev];
+          updated[i].isGenerating = false;
+          return updated;
+        });
+      }
     }
   };
 
@@ -312,71 +353,84 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-8">
-                <div className="bg-white rounded-3xl shadow-xl p-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-                    現在
-                  </h2>
-                  <div className="relative aspect-square rounded-2xl overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={selectedImage}
-                      alt="現在の写真"
-                      className="object-cover w-full h-full"
-                    />
-                  </div>
-                </div>
+              {/* タイムライン動画表示 */}
+              <div className="bg-white rounded-3xl shadow-xl p-8">
+                <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+                  タイムラインビュー
+                </h2>
 
-                <div className="bg-white rounded-3xl shadow-xl p-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-                    25年後
-                  </h2>
-                  <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
-                    {isLoading ? (
-                      <div className="flex flex-col items-center w-full px-4">
-                        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mb-4"></div>
-                        <p className="text-gray-600 font-semibold">未来を生成中...</p>
-                        <p className="text-gray-500 text-sm mt-2">動画生成には数分かかります</p>
-                        <div className="mt-6 w-full max-h-48 overflow-y-auto bg-gray-50 rounded-lg p-4 text-left">
-                          <p className="text-xs font-semibold text-gray-700 mb-2">処理ログ:</p>
-                          {statusLog.map((log, i) => (
-                            <p key={i} className="text-xs text-gray-600 font-mono">{log}</p>
-                          ))}
-                        </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {timelineVideos.map((timeline, idx) => (
+                    <div key={timeline.period} className="space-y-4">
+                      <h3 className="text-xl font-bold text-gray-700 text-center">
+                        {timeline.label}
+                      </h3>
+                      <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {timeline.isGenerating ? (
+                          <div className="flex flex-col items-center">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-purple-600 mb-2"></div>
+                            <p className="text-gray-600 text-sm">生成中...</p>
+                          </div>
+                        ) : timeline.video ? (
+                          <video
+                            src={timeline.video}
+                            controls
+                            autoPlay
+                            loop
+                            className="object-cover w-full h-full"
+                          />
+                        ) : idx === 0 ? (
+                          // 現在は元の写真を表示
+                          <>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={selectedImage}
+                              alt="現在の写真"
+                              className="object-cover w-full h-full"
+                            />
+                          </>
+                        ) : (
+                          <p className="text-gray-400 text-center px-4 text-sm">
+                            動画生成待ち
+                          </p>
+                        )}
                       </div>
-                    ) : futureVideo ? (
-                      <video
-                        src={futureVideo}
-                        controls
-                        autoPlay
-                        loop
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <p className="text-gray-400 text-center px-8">
-                        「未来を見る」ボタンを押してください
-                      </p>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
+
+              {/* 処理ログ */}
+              {statusLog.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-xl p-6">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">処理ログ</h3>
+                  <div className="max-h-48 overflow-y-auto bg-gray-50 rounded-lg p-4">
+                    {statusLog.map((log, i) => (
+                      <p key={i} className="text-xs text-gray-600 font-mono mb-1">{log}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-4 justify-center">
                 <button
                   onClick={() => {
                     setSelectedImage(null);
-                    setFutureVideo(null);
+                    setTimelineVideos([
+                      { period: 'present', video: null, isGenerating: false, label: '現在' },
+                      { period: 'future', video: null, isGenerating: false, label: '25年後' },
+                    ]);
                   }}
                   className="px-8 py-4 bg-gray-200 text-gray-700 rounded-full font-semibold hover:bg-gray-300 transition-colors"
                 >
                   別の写真を選ぶ
                 </button>
                 <button
-                  onClick={handleGenerateFuture}
-                  disabled={isLoading}
+                  onClick={generateAllTimelines}
+                  disabled={timelineVideos.some(t => t.isGenerating)}
                   className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                 >
-                  {isLoading ? '生成中...' : '未来を見る'}
+                  {timelineVideos.some(t => t.isGenerating) ? '生成中...' : 'タイムライン動画を生成'}
                 </button>
               </div>
             </div>
