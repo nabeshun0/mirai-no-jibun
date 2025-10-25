@@ -384,7 +384,7 @@ export default function Home() {
                           <>
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
-                              src={selectedImage}
+                              src={selectedImage || ''}
                               alt="現在の写真"
                               className="object-cover w-full h-full"
                             />
