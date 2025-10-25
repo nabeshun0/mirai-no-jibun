@@ -96,6 +96,42 @@ export default function Home() {
     console.log(message);
   };
 
+  // 健康パラメータに基づくアドバイス生成
+  const generateAdvice = () => {
+    const advice: string[] = [];
+
+    // UV露出のアドバイス
+    if (uvExposure >= 2) {
+      advice.push('☀️ UV対策を強化しましょう：日焼け止め（SPF30以上）を毎日使用、帽子や日傘の活用、11時〜15時の外出を避ける');
+    }
+    if (uvExposure === 1) {
+      advice.push('✅ UV対策は良好です！現在の習慣を継続してください');
+    }
+
+    // 体組成のアドバイス
+    if (bodyComposition >= 2) {
+      advice.push('🏃 体組成の改善：週3回以上の有酸素運動、筋力トレーニング、タンパク質を含むバランスの良い食事');
+    }
+    if (bodyComposition === 1) {
+      advice.push('✅ 体組成は理想的です！現在の運動習慣を維持してください');
+    }
+
+    // 睡眠・ストレスのアドバイス
+    if (sleepStress >= 2) {
+      advice.push('😴 睡眠とストレス管理：7時間以上の睡眠確保、就寝前のスマホ使用を控える、瞑想やヨガでストレス軽減');
+    }
+    if (sleepStress === 1) {
+      advice.push('✅ 睡眠とストレス管理は良好です！現在の生活リズムを大切に');
+    }
+
+    // 共通のアドバイス
+    advice.push('💧 水分補給：1日2リットル以上の水を飲む');
+    advice.push('🥗 抗酸化物質：ビタミンC・E、ポリフェノールを含む食品を積極的に摂取');
+    advice.push('🚭 禁煙：喫煙は老化を加速させる最大の要因です');
+
+    return advice;
+  };
+
   const generateAllTimelines = async () => {
     if (!selectedImage) return;
 
@@ -399,6 +435,20 @@ export default function Home() {
                   ))}
                 </div>
               </div>
+
+              {/* 若々しくなるためのアドバイス */}
+              {timelineVideos.find(t => t.period === 'future')?.video && (
+                <div className="bg-gradient-to-br from-green-50 to-blue-50 rounded-3xl shadow-xl p-6 border border-green-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">💡 25年後も若々しくいるためのアドバイス</h3>
+                  <div className="space-y-3">
+                    {generateAdvice().map((advice, i) => (
+                      <div key={i} className="bg-white rounded-lg p-3 shadow-sm">
+                        <p className="text-sm text-gray-700">{advice}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* 処理ログ */}
               {statusLog.length > 0 && (
