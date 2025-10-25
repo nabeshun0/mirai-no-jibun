@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 
 export default function Home() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -24,12 +23,31 @@ export default function Home() {
     if (!selectedImage) return;
 
     setIsLoading(true);
-    // TODO: AI APIを使った年齢加工処理を実装
-    // 現在は3秒後にダミーの結果を返す
-    setTimeout(() => {
-      setFutureImage(selectedImage);
+    try {
+      const response = await fetch('/api/generate-future', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: selectedImage }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API error:', errorData);
+        alert('画像の生成に失敗しました: ' + (errorData.error || 'Unknown error'));
+        setIsLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      setFutureImage(data.imageUrl);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('画像の生成中にエラーが発生しました');
+    } finally {
       setIsLoading(false);
-    }, 3000);
+    }
   };
 
   return (
@@ -83,11 +101,11 @@ export default function Home() {
                     現在
                   </h2>
                   <div className="relative aspect-square rounded-2xl overflow-hidden">
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src={selectedImage}
                       alt="現在の写真"
-                      fill
-                      className="object-cover"
+                      className="object-cover w-full h-full"
                     />
                   </div>
                 </div>
@@ -103,11 +121,11 @@ export default function Home() {
                         <p className="text-gray-600">未来を生成中...</p>
                       </div>
                     ) : futureImage ? (
-                      <Image
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
                         src={futureImage}
                         alt="25年後の写真"
-                        fill
-                        className="object-cover"
+                        className="object-cover w-full h-full"
                       />
                     ) : (
                       <p className="text-gray-400 text-center px-8">
