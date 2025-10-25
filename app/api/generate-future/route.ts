@@ -75,21 +75,21 @@ export async function POST(request: NextRequest) {
       1: 'Indoor lifestyle / sunscreen daily',
       2: 'Moderate outdoor activity',
       3: 'Outdoor work or no UV protection',
-    }[uvExposure];
+    }[uvExposure as 1 | 2 | 3];
 
     // 体組成レベルの説明
     const bodyLevelDesc = {
       1: 'BMI 18-21 / muscular',
       2: 'BMI 22-24 / standard',
       3: 'BMI 25+ / overweight or muscle loss',
-    }[bodyComposition];
+    }[bodyComposition as 1 | 2 | 3];
 
     // 睡眠・ストレスレベルの説明
     const sleepLevelDesc = {
       1: 'Sleep 7h+, low stress',
       2: 'Sleep 5-6h, moderate stress',
       3: 'Sleep <4h, high stress',
-    }[sleepStress];
+    }[sleepStress as 1 | 2 | 3];
 
     // period（タイムライン）に応じたプロンプト生成
     let videoPrompt = '';
