@@ -38,9 +38,6 @@ export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // 健康パラメータ
-  const [age, setAge] = useState(30);
-  const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [ethnicity, setEthnicity] = useState('Asian');
   const [uvExposure, setUvExposure] = useState(2);
   const [bodyComposition, setBodyComposition] = useState(2);
   const [sleepStress, setSleepStress] = useState(2);
@@ -136,9 +133,6 @@ export default function Home() {
           body: JSON.stringify({
             image: poseImages[i].image,
             parameters: {
-              age,
-              gender,
-              ethnicity,
               uvExposure,
               bodyComposition,
               sleepStress,
@@ -185,9 +179,6 @@ export default function Home() {
         body: JSON.stringify({
           image: selectedImage,
           parameters: {
-            age,
-            gender,
-            ethnicity,
             uvExposure,
             bodyComposition,
             sleepStress,
@@ -476,55 +467,8 @@ export default function Home() {
                   健康・ライフスタイル情報
                 </h2>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* 基本情報 */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      年齢
-                    </label>
-                    <input
-                      type="number"
-                      value={age}
-                      onChange={(e) => setAge(Number(e.target.value))}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                      min="18"
-                      max="80"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      性別
-                    </label>
-                    <select
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value as 'male' | 'female')}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                    >
-                      <option value="male">男性</option>
-                      <option value="female">女性</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      人種
-                    </label>
-                    <select
-                      value={ethnicity}
-                      onChange={(e) => setEthnicity(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
-                    >
-                      <option value="Asian">アジア人</option>
-                      <option value="Caucasian">白人</option>
-                      <option value="African">アフリカ系</option>
-                      <option value="Hispanic">ヒスパニック</option>
-                    </select>
-                  </div>
-                </div>
-
                 {/* ライフスタイル要因 */}
-                <div className="mt-6 space-y-6">
+                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       UV露出レベル: {uvExposure}

@@ -57,9 +57,6 @@ export async function POST(request: NextRequest) {
 
     // パラメータのデフォルト値
     const {
-      age = 30,
-      gender = 'male',
-      ethnicity = 'Asian',
       uvExposure = 2,
       bodyComposition = 2,
       sleepStress = 2,
@@ -99,11 +96,6 @@ export async function POST(request: NextRequest) {
 
     // 25年後のプロンプト - 健康パラメータを考慮した老化予測
     const futurePrompt = `Generate a photorealistic image-to-video of the same person 25 years older. Apply natural aging effects such as wrinkles, skin tone change, and facial volume shift, based on the following quantified lifestyle and health factors.
-
-Base Information:
-- Gender: ${gender}
-- Current Age: ${age}
-- Ethnicity: ${ethnicity}
 
 Lifestyle Aging Factors (3-level scale):
 - UV Exposure: Level ${uvExposure} (${uvLevelDesc})
