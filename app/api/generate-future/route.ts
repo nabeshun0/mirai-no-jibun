@@ -114,26 +114,41 @@ Output Style:
 --ratio adaptive --dur 5`;
     } else {
       // 25年後のプロンプト - 健康パラメータを考慮した老化予測
-      videoPrompt = `Generate a photorealistic image-to-video of the same person 25 years older. Apply natural aging effects such as wrinkles, skin tone change, and facial volume shift, based on the following quantified lifestyle and health factors.
+      videoPrompt = `IMPORTANT: Age this person by exactly 25 years. This person must look significantly older.
 
-Lifestyle Aging Factors (3-level scale):
-- UV Exposure: Level ${uvExposure} (${uvLevelDesc})
-- Body Composition (BMI/Fat): Level ${bodyComposition} (${bodyLevelDesc})
-- Sleep & Stress Balance: Level ${sleepStress} (${sleepLevelDesc})
+Transform this person to show them 25 years in the future with realistic aging effects:
 
-Weighting:
-- UV exposure: 3
-- Body composition: 2
-- Sleep & stress: 1
+REQUIRED AGING CHANGES (based on 25 years):
+- Deep wrinkles and fine lines on forehead, around eyes (crow's feet), mouth, and neck
+- Noticeable sagging skin on cheeks, jawline, and under chin
+- Age spots, sun damage, and uneven skin pigmentation
+- Thinning and graying hair (significant gray coverage)
+- Darker under-eye circles and deeper eye bags
+- Loss of facial volume and elasticity
+- Thinner lips with vertical lines
+- More prominent nasolabial folds
+- Visible neck aging with horizontal lines
 
-Output Style:
-- Photorealistic, natural aging only
-- Maintain all facial identity and proportions
-- Add realistic signs of aging (wrinkles, pigmentation, volume changes) according to levels
-- The person opens eyes and looks gently at the camera with a warm smile
-- Subtle head movement, natural breathing
-- Neutral lighting, professional studio composition
-- Output: 25 years later portrait video
+Lifestyle Impact Factors (3-level scale):
+- UV Exposure: Level ${uvExposure} (${uvLevelDesc}) - affects skin damage severity
+- Body Composition: Level ${bodyComposition} (${bodyLevelDesc}) - affects facial volume
+- Sleep & Stress: Level ${sleepStress} (${sleepLevelDesc}) - affects overall aging speed
+
+Apply these aging effects proportionally based on the levels above. Higher levels = more severe aging.
+
+Movement & Expression:
+- The aged person opens eyes and looks at camera with a gentle, mature smile
+- Subtle head movement and natural breathing
+- Show wisdom and life experience in the expression
+
+Technical Requirements:
+- Photorealistic elderly appearance
+- Maintain core facial identity while showing clear 25-year aging
+- Natural lighting, professional portrait composition
+- Duration: 5 seconds
+- Aspect ratio: adaptive
+
+This MUST show a person who is clearly 25 years older than the input image.
 
 --ratio adaptive --dur 5`;
     }
